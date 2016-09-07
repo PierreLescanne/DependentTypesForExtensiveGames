@@ -1,4 +1,4 @@
-(* Time-stamp: "2016-06-05 08:51:47 pierre" *)
+(* Time-stamp: "2016-09-05 17:28:02 pierre" *)
 (****************************************************************)
 (*                           games.v                            *)
 (*                                                              *)
@@ -12,12 +12,8 @@
 Section Games.
 Require Import List.
 
-(* Agents and Choices *)
-Variable Agent : Set.
-Variable Choice : Agent -> Set.
-
-(* Utilities *)
-Variable Utility: Set.
+(* Agents Utilities and Choices *)
+Variables (Agent Utility: Set) (Choice: Agent -> Set).
 
 (* preference on Utility *)
 Require Import Relations.
@@ -109,17 +105,17 @@ Qed.
 
 (* Finitely broad game *)
 
-Definition HasFinitelyManyStrategy (g:Game): Prop :=
+Definition FinitelyBroad (g:Game): Prop :=
   exists (l: list StratProf), forall (s:StratProf),
       game s == g <-> In s l.
 
 (* Finite Horizon Game *)
      
-Inductive FiniteHorizonGame : Game -> Prop :=
-| finHorGLeaf: forall f, FiniteHorizonGame <|f|>
+Inductive FiniteHistoryGame : Game -> Prop :=
+| finHorGLeaf: forall f, FiniteHistoryGame <|f|>
 | finHorGNode: forall (a:Agent)(next: Choice a -> Game),
-             (forall c':Choice a, FiniteHorizonGame (next c')) ->
-             FiniteHorizonGame <|a,next|>.
+             (forall c':Choice a, FiniteHistoryGame (next c')) ->
+             FiniteHistoryGame <|a,next|>.
 
 (* Convergent Strategy Profile *)
 
@@ -266,37 +262,33 @@ End Games.
 
 Section Divergence.
 
-(* Agents and Choices *)
-Variable Agent : Set.
-Variable Choice : Agent -> Set.
+(* Agents Utilities and Choices *)
+Variables (Agent Utility: Set) (Choice: Agent -> Set).
 
-(* Utilities *)
-Variable Utility: Set.
-
-Definition StPr := StratProf Agent Choice Utility. 
+Definition StPr := StratProf Agent Utility Choice. 
 
 (* preference on Utility *)
 Require Import Relations.
 Variable preference: relation Utility.
 
-Arguments game [Agent Choice Utility] s.
-Arguments SPE [Agent Choice Utility] preference s.
+Arguments game [Agent Utility Choice] s.
+Arguments SPE [Agent Utility Choice] preference s.
 
-Notation "<< f >>" := (sLeaf Agent Choice Utility f).
-Notation "<< a , c , next >>" := (sNode Agent Choice Utility a c next).
-Notation "g == g'" := (gEqual Agent Choice Utility g g') (at level 80).
+Notation "<< f >>" := (sLeaf Agent Utility Choice f).
+Notation "<< a , c , next >>" := (sNode Agent Utility Choice a c next).
+Notation "g == g'" := (gEqual Agent Utility Choice g g') (at level 80).
 
-CoInductive Divergent : StratProf Agent Choice Utility -> Prop :=
+CoInductive Divergent : StratProf Agent Utility Choice -> Prop :=
 | divNode : forall (a:Agent)(c:Choice a)(next:Choice a->StPr), 
     Divergent (next c) -> Divergent (<<a,c,next>>).
 
-CoInductive good : StratProf Agent Choice Utility -> Prop :=
+CoInductive good : StratProf Agent Utility Choice -> Prop :=
 | goodNode :forall (a:Agent)(c:Choice a)
                    (next next':Choice a -> StPr), 
               (game (<<a,c,next>>) == game (<<a,c,next'>>) /\ 
               SPE preference (<<a,c,next'>>)) -> 
               good(<<a,c,next>>).
 
-Definition AlwaysGood := Always Agent Choice Utility good.
+Definition AlwaysGood := Always Agent Utility Choice good.
 
 End Divergence.
