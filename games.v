@@ -1,4 +1,4 @@
-(* Time-stamp: "2016-09-05 17:28:02 pierre" *)
+(* Time-stamp: "2017-01-28 11:37:23 libres" *)
 (****************************************************************)
 (*                           games.v                            *)
 (*                                                              *)
@@ -7,30 +7,35 @@
 (*              LIP (ENS-Lyon, CNRS, INRIA)                     *)
 (*                                                              *)
 (*                                                              *)
-(*  Developed in  V8.4pl4                January -- April 2016  *)
+(*  Developed in  V8.6                            January 2016  *)
 (****************************************************************)
 Section Games.
 Require Import List.
 
-(* Agents Utilities and Choices *)
-Variables (Agent Utility: Set) (Choice: Agent -> Set).
+(* Agents and Choices *)
+Variable Agent : Set.
+Variable Choice : Agent -> Set.
+
+(* Utilities *)
+Variable Utility: Agent -> Set.
 
 (* preference on Utility *)
 Require Import Relations.
-Variable preference: relation Utility.
+Variable pref: forall a: Agent, relation (Utility a).
 
-Hypothesis preference_is_preorder: preorder Utility preference.
-    Infix "=<" := preference (at level 100).
+Hypothesis pref_is_preorder: forall a: Agent, preorder (Utility a) (pref a).
 
 (* Strategy profiles *)
 CoInductive StratProf  : Set :=
-| sLeaf : (Agent -> Utility) -> StratProf
-| sNode : forall (a:Agent), Choice a -> (Choice a -> StratProf) -> StratProf.
+| sLeaf : (forall a:Agent, Utility a) -> StratProf
+| sNode : forall (a:Agent),
+            Choice a -> (Choice a -> StratProf) -> StratProf.
+
   Notation "<< f >>" := (sLeaf f).
   Notation "<< a , c , next >>" := (sNode a c next).
 
 Definition StratProf_identity (s:StratProf): StratProf :=
-match s with
+match (s:StratProf) return StratProf with
 | <<f>> =>  <<f>>
 | <<a,c,next>> => <<a,c,next>>
 end.
@@ -40,10 +45,10 @@ Lemma StratProf_decomposition :
 Proof.
  destruct s; reflexivity.
 Qed.
-
+  
 (* Games *)
 CoInductive Game : Set :=
-| gLeaf : (Agent -> Utility) -> Game 
+| gLeaf :  (forall a:Agent, Utility a) -> Game 
 | gNode : forall (a:Agent), (Choice a -> Game) -> Game.
   Notation "<| f |>" := (gLeaf f).
   Notation "<| a , next |>" := (gNode a next).
@@ -60,7 +65,8 @@ Proof.
  destruct g; reflexivity.
 Qed.
 
-(* Equality of games *)
+(** - Equality of Games *)
+
 CoInductive gEqual: Game -> Game -> Prop :=
 | gEqualLeaf: forall f, gEqual (<| f |>) (<| f |>)
 | gEqualNode: forall (a:Agent)(next next':Choice a->Game),
@@ -79,7 +85,6 @@ Qed.
 
 Notation "g == g'" := (gEqual g g') (at level 80).
 
-(* The game of a strategy profile *)
 Definition game : StratProf -> Game :=
 cofix game_co (s : StratProf) : Game :=
   match s with
@@ -103,22 +108,6 @@ Proof.
   reflexivity.
 Qed.
 
-(* Finitely broad game *)
-
-Definition FinitelyBroad (g:Game): Prop :=
-  exists (l: list StratProf), forall (s:StratProf),
-      game s == g <-> In s l.
-
-(* Finite Horizon Game *)
-     
-Inductive FiniteHistoryGame : Game -> Prop :=
-| finHorGLeaf: forall f, FiniteHistoryGame <|f|>
-| finHorGNode: forall (a:Agent)(next: Choice a -> Game),
-             (forall c':Choice a, FiniteHistoryGame (next c')) ->
-             FiniteHistoryGame <|a,next|>.
-
-(* Convergent Strategy Profile *)
-
 Inductive Convergent: StratProf -> Prop :=
 | ConvLeaf: forall f, Convergent <<f>>
 | ConvNode: forall (a:Agent) (c:Choice a)(next: Choice a -> StratProf),
@@ -132,14 +121,6 @@ Inductive convergent : StratProf -> Set :=
              convergent (next c) ->
              convergent <<a,c,next>>.
      Notation "↓↓ s " := (convergent s) (at level 5).
-
-(* Finite Strategy Profile *)
-     
-Inductive finiteStratProf : StratProf -> Set :=
-| finSLeaf: forall f, finiteStratProf <<f>>
-| finSNode: forall (a:Agent)(c:Choice a)(next: Choice a -> StratProf),
-             forall c':Choice a, finiteStratProf (next c') ->
-             finiteStratProf <<a,c,next>>.
 
 (* Always *)
 
@@ -155,30 +136,39 @@ Definition AlwaysConvergent := □ (fun s:StratProf => (↓ (s))).
 Notation "⇓ s" := (AlwaysConvergent s)
                     (at level 15).
 
+(* Along P, means that the predicate P is fulfiled 
+   along the path given by the choices *)
+CoInductive Along 
+(P:StratProf -> Prop) : StratProf -> Prop :=
+| AlongLeaf : forall f, Along P (<<f>>)
+| AlongNode : forall (a:Agent)(c:Choice a)
+                      (next:Choice a->StratProf),
+          P (<<a,c,next>>) ->  Along P (next c) ->
+               Along P (<<a,c,next>>).
+
 (* Utility assignment *)
 
-Definition UAssignment (s:StratProf)(H:↓↓ s):Agent -> Utility.
+Definition UAssignment (s:StratProf)(H:↓↓ s): forall a:Agent, Utility a.
   induction H; assumption.
 Defined.
 
-Definition UAssignment':  forall s : StratProf, convergent s -> Agent -> Utility :=
+Definition UAssignment':  forall s : StratProf, convergent s ->  (forall a:Agent, Utility a) :=
 fun (s : StratProf) (H : convergent s) =>
-convergent_rec (fun (s0 : StratProf) (_ : convergent s0) => Agent -> Utility)
-  (fun f : Agent -> Utility => f)
+convergent_rec (fun (s0 : StratProf) (_ : convergent s0) => (forall a:Agent, Utility a))
+  (fun f : (forall a:Agent, Utility a) => f)
   (fun (a : Agent) (c : Choice a) (next : Choice a -> StratProf)
-     (_ : ↓↓ (next c)) (IHconvergent : Agent -> Utility) => IHconvergent) s H.
+     (_ : ↓↓ (next c)) (IHconvergent : (forall a:Agent, Utility a)) => IHconvergent) s H.
 
 (* Utility assignment as a relation*)
-Inductive Uassign : StratProf -> Agent -> Utility -> Prop :=
-| UassignLeaf: forall a f, Uassign (<<f>>) a (f a)
-| UassignNode: forall  (a a':Agent)(c:Choice a')
-                       (u:Utility)
-                       (next:Choice a' -> StratProf),
-    Uassign (next c) a u  -> Uassign (<<a',c,next>>) a u.
+Inductive Uassign : StratProf ->  (forall a:Agent, Utility a) -> Prop :=
+| UassignLeaf: forall f, Uassign (<<f>>) f
+| UassignNode: forall  (a:Agent)(c:Choice a)
+                       (ua: forall a',Utility a')
+                       (next:Choice a -> StratProf),
+    Uassign (next c) ua  -> Uassign (<<a,c,next>>) ua.
 
 Lemma Uassign_Uassignment:
-  forall (s:StratProf) (a:Agent) (H: ↓↓ s),
-                  Uassign s a (UAssignment s H a).
+  forall (s:StratProf) (H: ↓↓ s), Uassign s (UAssignment s H).
 Proof.
   intros.
   elim H.
@@ -190,37 +180,59 @@ Proof.
   assumption.
 Qed.
 
+(* == Inversion of Uassign == *)
+(* Chlipala's solution *)
+Lemma UassignNode_inv': forall  (s:StratProf) (ua:forall a,Utility a),
+    Uassign s ua
+    -> match s with
+       | << a', c, next >> => Uassign (next c) ua
+       | _ => True
+       end.
+Proof.
+  destruct 1; auto.
+Qed.
+
+Lemma UassignNode_inv: forall (a:Agent) (ua:forall a,Utility a)
+                           (next:Choice a -> StratProf)
+                           (c:Choice a),
+                     Uassign (<<a,c,next>>) ua -> Uassign (next c) ua.
+Proof.
+  intros.
+  apply UassignNode_inv' in H.
+  assumption.
+Qed.
+
 (* Monin's solution *)
-Definition pr_Uassign {s} {a} {u} (x: Uassign s a u) :=
-  let diag s a0 u0 :=
+Definition pr_Uassign {s} {ua} (x: Uassign s ua) :=
+  let diag s ua0 :=
      match s with
      | << f >> =>
-         forall X: Agent -> Utility -> Prop, 
-         (forall a, X a (f a)) -> X a0 u0 
+         forall X: (forall a, Utility a) -> Prop, 
+         X f -> X ua0 
      | << a' , c , next >> =>
-         forall X: Agent -> Utility -> Prop, 
-         (forall a u, Uassign (next c) a u -> X a u) -> X a0 u0 
+         forall X: (forall a, Utility a) -> Prop, 
+         (forall ua, Uassign (next c) ua -> X ua) -> X ua0 
     end in
-  match x in Uassign s a u return diag s a u with
-  | UassignLeaf a f => fun X k => k a
-  | UassignNode a a' c ut next ua => fun X k => k a ut ua
+  match x in Uassign s ua return diag s ua with
+  | UassignLeaf f => fun X k => k
+  | UassignNode a c ut next ua => fun X k => k ut ua
   end.
 
 Lemma UassignNode_inv_Monin:
-   forall (a a':Agent) (u:Utility) (next:Choice a' -> StratProf) (c:Choice a'),
-   Uassign (<<a',c,next>>) a u -> Uassign (next c) a u.
-intros until c. intro ua. apply (pr_Uassign ua). trivial.
+   forall (a':Agent) (ua:forall a, Utility a) (next:Choice a' -> StratProf) (c:Choice a'),
+   Uassign (<<a',c,next>>) ua -> Uassign (next c) ua.
+intros until c. intro H. apply (pr_Uassign H). trivial.
 Qed.
 
 Lemma UassignLeaf_inv:
-   forall (a:Agent) f (u:Utility), Uassign << f >> a u -> u = f a.
-intros a f u ua. apply (pr_Uassign ua). trivial.
+   forall (f ua:forall a, Utility a), Uassign << f >> ua -> ua = f.
+intros f ua H. apply (pr_Uassign H). trivial.
 Qed.
 
 Lemma UniquenessUassign:
-  forall s a u v, Uassign s a u -> Uassign s a v -> u=v.
+  forall s ua va, Uassign s ua -> Uassign s va -> ua=va.
 Proof.
-  intros until v.
+  intros until va.
   intros UassignU UassignV.
   induction UassignV.
   intros; apply UassignLeaf_inv; auto.
@@ -228,13 +240,13 @@ Proof.
   Qed.
 
 Lemma ExistenceUassign:
-  forall (s:StratProf)(a:Agent),
-    (↓ s) -> exists (u:Utility), Uassign s a u.
+  forall (s:StratProf),
+    (↓ s) -> exists (ua: forall a, Utility a), Uassign s ua.
 Proof.
-  intros s a ConvS.
+  intros s ConvS.
   elim ConvS.  
   intro.
-  exists (f a).
+  exists f.
   apply UassignLeaf.
   intros a0 c next ConvNextS Exu.
   elim Exu.
@@ -243,52 +255,93 @@ Proof.
   assumption.
 Qed.
 
+(* Finite Game *)
+     
+Inductive Finite : Game -> Set :=
+| finGLeaf: forall f, Finite <|f|>
+| finGNode: forall (a:Agent)(c:Choice a)(next: Choice a -> Game),
+             forall c':Choice a, Finite (next c') ->
+             Finite <|a,next|>.
+
+
+(* Finite Strategy Profile *)
+     
+Inductive FiniteStratProf : StratProf -> Set :=
+| finSLeaf: forall f, FiniteStratProf <<f>>
+| finSNode: forall (a:Agent)(c:Choice a)(next: Choice a -> StratProf),
+             forall c':Choice a, FiniteStratProf (next c') ->
+             FiniteStratProf <<a,c,next>>.
+
+(* Finitely broad game *)
+
+Definition FinitelyBroad (g:Game): Prop :=
+  exists (l: list StratProf), forall (s:StratProf),
+      game s == g <-> In s l.
+
+(* Finite History Game *)
+     
+Inductive FiniteHistoryGame : Game -> Prop :=
+| finHorGLeaf: forall f, FiniteHistoryGame <|f|>
+| finHorGNode: forall (a:Agent)(next: Choice a -> Game),
+             (forall c':Choice a, FiniteHistoryGame (next c')) ->
+             FiniteHistoryGame <|a,next|>.
+
+(* Finite Horizon Strategy Profile *)
+     
+Inductive FiniteHistoryStratProf : StratProf -> Prop :=
+| finHorSLeaf: forall f, FiniteHistoryStratProf <<f>>
+| finHorSNode: forall (a:Agent) (c:Choice a)
+                      (next: Choice a -> StratProf),
+             (forall c':Choice a, FiniteHistoryStratProf (next c')) ->
+             FiniteHistoryStratProf <<a,c,next>>.
+
 (* == Subgame Perfect Equilibrium == *)
 
 CoInductive SPE : StratProf -> Prop :=
-| SPELeaf : forall (f:Agent->Utility), SPE <<f>>
+| SPELeaf : forall (f: forall a:Agent, Utility a), SPE <<f>>
 | SPENode :  forall (a:Agent)
                     (c c':Choice a)
                     (next:Choice a->StratProf)
-                    (u u':Utility),
+                    (u u':forall a':Agent, Utility a'),
                ⇓ <<a,c,next>> -> 
-               Uassign (next c') a u' ->  Uassign (next c) a u ->
-               (u' =< u) -> SPE (next c') ->
+               Uassign (next c') u' ->  Uassign (next c) u ->
+               (pref a (u' a) (u a)) -> SPE (next c') ->
              SPE <<a,c,next>>.
-
 End Games.
-
-(* ===================================== *)
 
 Section Divergence.
 
-(* Agents Utilities and Choices *)
-Variables (Agent Utility: Set) (Choice: Agent -> Set).
+(* Agents and Choices *)
+Variable Agent : Set.
+Variable Choice : Agent -> Set.
 
-Definition StPr := StratProf Agent Utility Choice. 
+(* Utilities *)
+Variable Utility: Agent -> Set.
+
+Definition StPr := StratProf Agent Choice Utility. 
 
 (* preference on Utility *)
 Require Import Relations.
-Variable preference: relation Utility.
+Variable pref: forall a: Agent, relation (Utility a).
 
-Arguments game [Agent Utility Choice] s.
-Arguments SPE [Agent Utility Choice] preference s.
+Arguments game [Agent Choice Utility] s.
+Arguments SPE [Agent Choice Utility] pref s.
 
-Notation "<< f >>" := (sLeaf Agent Utility Choice f).
-Notation "<< a , c , next >>" := (sNode Agent Utility Choice a c next).
-Notation "g == g'" := (gEqual Agent Utility Choice g g') (at level 80).
+Notation "<< f >>" := (sLeaf Agent Choice Utility f).
+Notation "<< a , c , next >>" := (sNode Agent Choice Utility a c next).
+Notation "g == g'" := (gEqual Agent Choice Utility g g') (at level 80).
 
-CoInductive Divergent : StratProf Agent Utility Choice -> Prop :=
+CoInductive Divergent : StratProf Agent Choice Utility -> Prop :=
 | divNode : forall (a:Agent)(c:Choice a)(next:Choice a->StPr), 
     Divergent (next c) -> Divergent (<<a,c,next>>).
 
-CoInductive good : StratProf Agent Utility Choice -> Prop :=
+CoInductive good : StratProf Agent Choice Utility -> Prop :=
 | goodNode :forall (a:Agent)(c:Choice a)
                    (next next':Choice a -> StPr), 
-              (game (<<a,c,next>>) == game (<<a,c,next'>>) /\ 
-              SPE preference (<<a,c,next'>>)) -> 
+              game (<<a,c,next>>) == game (<<a,c,next'>>) ->
+              SPE pref (<<a,c,next'>>) -> 
               good(<<a,c,next>>).
 
-Definition AlwaysGood := Always Agent Utility Choice good.
+Definition AlongGood := Along Agent Choice Utility good.
 
 End Divergence.
