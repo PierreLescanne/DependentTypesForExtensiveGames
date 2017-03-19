@@ -1,4 +1,4 @@
-(* Time-stamp: "2017-01-28 11:37:23 libres" *)
+(* Time-stamp: "2017-03-06 18:53:59 libres" *)
 (****************************************************************)
 (*                           games.v                            *)
 (*                                                              *)
@@ -12,16 +12,16 @@
 Section Games.
 Require Import List.
 
-(* Agents and Choices *)
+(* Agents, Choices and Utilities *)
 Variable Agent : Set.
-Variable Choice : Agent -> Set.
+Variable Choice Utility: Agent -> Set.
 
-(* Utilities *)
-Variable Utility: Agent -> Set.
+(* Finiteness of Choice *)
+Variable finite: Set -> Prop.
 
 (* preference on Utility *)
 Require Import Relations.
-Variable pref: forall a: Agent, relation (Utility a).
+Variable pref : forall a: Agent, relation (Utility a).
 
 Hypothesis pref_is_preorder: forall a: Agent, preorder (Utility a) (pref a).
 
@@ -230,9 +230,9 @@ intros f ua H. apply (pr_Uassign H). trivial.
 Qed.
 
 Lemma UniquenessUassign:
-  forall s ua va, Uassign s ua -> Uassign s va -> ua=va.
+  forall s ua ua', Uassign s ua -> Uassign s ua' -> ua=ua'.
 Proof.
-  intros until va.
+  intros until ua'.
   intros UassignU UassignV.
   induction UassignV.
   intros; apply UassignLeaf_inv; auto.
@@ -259,9 +259,10 @@ Qed.
      
 Inductive Finite : Game -> Set :=
 | finGLeaf: forall f, Finite <|f|>
-| finGNode: forall (a:Agent)(c:Choice a)(next: Choice a -> Game),
-             forall c':Choice a, Finite (next c') ->
-             Finite <|a,next|>.
+| finGNode: forall (a:Agent)(next: Choice a -> Game),
+              finite (Choice a) ->
+              (forall c:Choice a, Finite (next c)) ->
+              Finite <|a,next|>.
 
 
 (* Finite Strategy Profile *)
@@ -269,8 +270,9 @@ Inductive Finite : Game -> Set :=
 Inductive FiniteStratProf : StratProf -> Set :=
 | finSLeaf: forall f, FiniteStratProf <<f>>
 | finSNode: forall (a:Agent)(c:Choice a)(next: Choice a -> StratProf),
-             forall c':Choice a, FiniteStratProf (next c') ->
-             FiniteStratProf <<a,c,next>>.
+              finite (Choice a) ->
+              (forall c':Choice a, FiniteStratProf (next c')) ->
+              FiniteStratProf <<a,c,next>>.
 
 (* Finitely broad game *)
 
@@ -283,8 +285,8 @@ Definition FinitelyBroad (g:Game): Prop :=
 Inductive FiniteHistoryGame : Game -> Prop :=
 | finHorGLeaf: forall f, FiniteHistoryGame <|f|>
 | finHorGNode: forall (a:Agent)(next: Choice a -> Game),
-             (forall c':Choice a, FiniteHistoryGame (next c')) ->
-             FiniteHistoryGame <|a,next|>.
+               (forall c:Choice a, FiniteHistoryGame (next c)) ->
+                                  FiniteHistoryGame <|a,next|>.
 
 (* Finite Horizon Strategy Profile *)
      
@@ -302,10 +304,10 @@ CoInductive SPE : StratProf -> Prop :=
 | SPENode :  forall (a:Agent)
                     (c c':Choice a)
                     (next:Choice a->StratProf)
-                    (u u':forall a':Agent, Utility a'),
+                    (ua ua':forall a':Agent, Utility a'),
                ⇓ <<a,c,next>> -> 
-               Uassign (next c') u' ->  Uassign (next c) u ->
-               (pref a (u' a) (u a)) -> SPE (next c') ->
+               Uassign (next c') ua' ->  Uassign (next c) ua ->
+               (pref a (ua' a) (ua a)) -> SPE (next c') ->
              SPE <<a,c,next>>.
 End Games.
 
