@@ -1,4 +1,4 @@
-(* Time-stamp: "2017-01-28 12:51:48 libres" *)
+(* Time-stamp: "2017-03-06 18:41:24 libres" *)
 (****************************************************************)
 (*                      finite_Horizon.v                        *)
 (*                                                              *)
@@ -38,11 +38,11 @@ Fixpoint  ThreadlikeGame (n:nat): (Game AliceBob Choice Utility) :=
 Definition GameWFH:(Game AliceBob Choice Utility)  :=
   <| Alice, fun n:Choice Alice => ThreadlikeGame n |>.
 
-Proposition FiniteHistoryGameWFH: FiniteHistoryGame AliceBob Choice Utility GameWFH.
+Proposition FiniteGameWFH: FiniteHistoryGame AliceBob Choice Utility GameWFH.
 Proof.
-  unfold GameWFH; apply finHorGNode; intro; elim c';
+  unfold GameWFH; apply finHorGNode; induction c;
   [apply finHorGLeaf |
-   intros; apply finHorGNode; induction c'0; assumption].
+   intros; apply finHorGNode; induction c0; assumption].
 Qed.
 
 End FiniteHistory.

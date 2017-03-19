@@ -1,4 +1,4 @@
-(* Time-stamp: "2017-01-28 14:36:48 libres" *)
+(* Time-stamp: "2017-02-07 13:51:37 pierre" *)
 (****************************************************************)
 (*                        escalation.v                          *)
 (*                                                              *)
@@ -19,9 +19,9 @@ Arguments Divergent  [Agent Choice Utility] s.
 Require Import Relations.
 
 Lemma AlongGoodAndDivergentInYingYang :
-  exists (s:StratProf yingYang.AliceBob yingYang.ChoiceYY yingYang.UtilityYY),
-    AlongGood yingYang.AliceBob yingYang.ChoiceYY yingYang.UtilityYY eqYY s /\
-    Divergent s.
+  exists (s:StratProf yingYang.Agent yingYang.Choice yingYang.Utility),
+    AlongGood yingYang.Agent yingYang.Choice yingYang.Utility yingYang.pref s
+    /\ Divergent s.
 Proof.
   exists yingYangAcBc.  
   split.
@@ -30,9 +30,9 @@ Proof.
 Qed.
 
 Lemma AlongGoodAndDivergentInDollar :
-  exists (s:StratProf dollar.AliceBob dollar.ChoiceDol dollar.UtilityDol),
-    AlongGood dollar.AliceBob dollar.ChoiceDol dollar.UtilityDol dollar.geDol s /\
-    Divergent s.
+  exists (s:StratProf dollar.Agent dollar.Choice dollar.Utility),
+    AlongGood dollar.Agent dollar.Choice dollar.Utility dollar.pref s
+    /\ Divergent s.
 Proof.
   exists (dollarAcBc 0).
   split.

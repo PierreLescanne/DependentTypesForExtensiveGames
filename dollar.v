@@ -1,4 +1,4 @@
-(* Time-stamp: "2017-01-27 16:40:26 libres" *)
+(* Time-stamp: "2017-02-07 13:33:48 pierre" *)
 (****************************************************************)
 (*                        dollar.v                              *)
 (*                                                              *)
@@ -18,12 +18,12 @@ Require Import Omega.
 Require Import Relations.
 
 (* Setting sets for agents and choices *)
-Inductive AliceBob : Set := | Alice | Bob.
+Inductive Agent : Set := | Alice | Bob.
 Inductive DorR : Set := | d | r.
-Definition ChoiceDol: AliceBob -> Set := fun a => DorR.
-Definition UtilityDol: AliceBob -> Set := fun a => nat.
-Definition geDol: forall a: AliceBob, relation (UtilityDol a) :=
-  fun a :AliceBob => fun x:UtilityDol a => fun y:UtilityDol a => ge x y.
+Definition Choice: Agent -> Set := fun a => DorR.
+Definition Utility: Agent -> Set := fun a => nat.
+Definition pref: forall a: Agent, relation (Utility a) :=
+  fun a :Agent => fun x:Utility a => fun y:Utility a => ge x y.
 
 Arguments StratProf [Agent Choice Utility].
 Arguments Game [Agent Choice Utility].
@@ -41,13 +41,13 @@ Arguments gEqual [Agent Choice Utility] g1 g2.
 Arguments Divergent  [Agent Choice Utility] s.
 Arguments AlongGood  [Agent Choice Utility] pref s.
 
-Notation "<< f >>" := (sLeaf AliceBob ChoiceDol UtilityDol f).
+Notation "<< f >>" := (sLeaf Agent Choice Utility f).
 Notation "<< a , c , next >>" := 
-  (sNode AliceBob ChoiceDol UtilityDol a c next).
+  (sNode Agent Choice Utility a c next).
 Notation "[ x , y ]" := 
-  (fun a:AliceBob => match a as AliceBob return (UtilityDol a) with Alice => x | Bob => y end).
-Notation "<| f |>" := (gLeaf  AliceBob nat Choice f).
-Notation "<| a , next |>" := (gNode AliceBob ChoiceDol UtilityDol a next).
+  (fun a:Agent => match a as Agent return (Utility a) with Alice => x | Bob => y end).
+Notation "<| f |>" := (gLeaf  Agent nat Choice f).
+Notation "<| a , next |>" := (gNode Agent Choice Utility a next).
 
 Notation "s1 +++ s2" := 
   (fun c:DorR => match c with d => s1 | r => s2 end) 
@@ -59,7 +59,7 @@ Notation "↑ s " := (Divergent s) (at level 5).
 Notation "g == g'" := (gEqual g g') (at level 80).
 
 Ltac decomp := rewrite <- StratProf_decomposition;  simpl.
-Ltac solvegeDol :=  unfold geDol;  omega.
+Ltac solvepref :=  unfold pref;  omega.
 
 (* --------------------------------- *)
 (**    Dollar Auction                *)
@@ -236,108 +236,108 @@ Proof.
 Qed.
 
 (* SPE *)
-Lemma SPEDolAcBs: forall n, SPE geDol (dollarAcBs n).
+Lemma SPEDolAcBs: forall n, SPE pref (dollarAcBs n).
 Proof.
   cofix SPEDolAcBs;
   intro n;
   decomp;
-  apply SPENode with (c':=r)(u:=[n+1,n+1])(u':=[n+1,n+1]);
+  apply SPENode with (c':=r)(ua:=[n+1,n+1])(ua':=[n+1,n+1]);
   [apply AlwaysNode; [apply ConvNode;apply ConvergentDolBsAc |
                       induction c'; [apply AlwaysLeaf | apply AlwsConvDolBsAc]] |
    apply UassignDolBsAc |
    apply UassignDolBsAc |
-   solvegeDol |
-   decomp; apply SPENode with (c':=r)(u:=[n+1,n+1])(u':=[n+1+1,n+1+1]);
+   solvepref |
+   decomp; apply SPENode with (c':=r)(ua:=[n+1,n+1])(ua':=[n+1+1,n+1+1]);
    [apply AlwaysNode; [apply ConvNode;  apply ConvLeaf |
                        induction c'; [apply AlwaysLeaf| apply AlwsConvDolAcBs]] |
     apply UassignDolAcBs |
     apply UassignLeaf |
-    solvegeDol |
+    solvepref |
    apply SPEDolAcBs]].
 Qed.
 
-Lemma SPEDolBsAc: forall n, SPE geDol (dollarBsAc n).
+Lemma SPEDolBsAc: forall n, SPE pref (dollarBsAc n).
 Proof.
   cofix SPEDolBsAc;
   intro n;
   decomp;
-  apply SPENode with (c':=r)(u:=[n+1,n+1])(u':=[n+1+1,n+1+1]);
+  apply SPENode with (c':=r)(ua:=[n+1,n+1])(ua':=[n+1+1,n+1+1]);
   [apply AlwaysNode; [apply ConvNode; apply ConvLeaf | induction c';[apply AlwaysLeaf | apply AlwsConvDolAcBs]] |
    apply UassignDolAcBs |
    apply UassignLeaf | 
-   solvegeDol |
+   solvepref |
    apply SPEDolAcBs].
 Qed.
  
-Lemma SPEDolAsBc: forall n, SPE geDol (dollarAsBc n).
+Lemma SPEDolAsBc: forall n, SPE pref (dollarAsBc n).
 Proof.
   cofix SPEDolAsBc;
   intro n;
   decomp;
-  apply SPENode with (c':=r)(u:=[n+1,n])(u':=[n+1+1,n+1]);
+  apply SPENode with (c':=r)(ua:=[n+1,n])(ua':=[n+1+1,n+1]);
   [apply AlwaysNode; [apply ConvNode; apply ConvLeaf |
                       induction c';[apply AlwaysLeaf | apply AlwsConvDolBcAs]] |
    apply UassignDolBcAs |
    apply UassignLeaf | 
-   solvegeDol |
+   solvepref |
    decomp; 
-   apply SPENode with (c':=r)(u:=[n+1+1,n+1])(u':=[n+1+1,n+1]); 
+   apply SPENode with (c':=r)(ua:=[n+1+1,n+1])(ua':=[n+1+1,n+1]); 
    [apply AlwaysNode; [apply ConvNode; apply ConvergentDolAsBc |
                        induction c'; [apply AlwaysLeaf | apply AlwsConvDolAsBc]] |
     apply UassignDolAsBc |
     apply UassignDolAsBc |
     auto |
     apply SPEDolAsBc]] ;
-  solvegeDol.
+  solvepref.
 Qed.
 
-Lemma SPEDolBcAs: forall n, SPE geDol (dollarBcAs n).
+Lemma SPEDolBcAs: forall n, SPE pref (dollarBcAs n).
 Proof.
-  intro n; decomp; apply SPENode with (c':=r)(u:=[n+1+1,n+1])(u':=[n+1+1,n+1]);
+  intro n; decomp; apply SPENode with (c':=r)(ua:=[n+1+1,n+1])(ua':=[n+1+1,n+1]);
   [apply AlwaysNode; [apply ConvNode; apply ConvergentDolAsBc |
                       induction c'; [apply AlwaysLeaf | apply AlwsConvDolAsBc]] |
    apply UassignDolAsBc |
    apply UassignDolAsBc |
-   solvegeDol | 
+   solvepref | 
    apply SPEDolAsBc].
 Qed.
 
 (* Good *)
-Lemma GoodDolAcBc: forall n, good geDol (dollarAcBc n).
+Lemma GoodDolAcBc: forall n, good pref (dollarAcBc n).
 Proof.
   intro n;
   decomp;
   apply goodNode with (next':= <<[n+1,n]>> +++ dollarBcAs n);
    [rewrite gameNode; rewrite gameNode; apply gEqualNode;
    induction c; [ apply refGEqual | apply sameGameBcAs_BcAc]|
-   apply SPENode with (c':=r)(u:=[n+1+1,n+1])(u':=[n+1+1,n+1]);
+   apply SPENode with (c':=r)(ua:=[n+1+1,n+1])(ua':=[n+1+1,n+1]);
      [apply AlwaysNode; [apply ConvNode; apply ConvergentDolBcAs |
                          induction c'; [apply AlwaysLeaf |  apply AlwsConvDolBcAs]] |
       apply UassignDolBcAs | 
       apply UassignDolBcAs |
       auto |
       apply SPEDolBcAs]];
-   solvegeDol.
+   solvepref.
 Qed.
 
-Lemma GoodDolBcAc: forall n, good geDol (dollarBcAc n).
+Lemma GoodDolBcAc: forall n, good pref (dollarBcAc n).
 Proof.
   intro n; decomp; decomp;
   apply goodNode with (next':= <<[n+1,n+1]>> +++ dollarAsBc (n + 1));
   [rewrite gameNode; rewrite gameNode; apply gEqualNode;
    induction c; [rewrite gameLeaf; apply gEqualLeaf| apply sameGameAcBc_AsBc] |
-   apply SPENode with (c':=r)(u:=[n+1+1,n+1])(u':=[n+1+1,n+1]);
+   apply SPENode with (c':=r)(ua:=[n+1+1,n+1])(ua':=[n+1+1,n+1]);
      [apply AlwaysNode; [apply ConvNode; apply ConvergentDolAsBc |
                          induction c'; [apply AlwaysLeaf | apply AlwsConvDolAsBc]] |
       apply UassignDolAsBc |
       apply UassignDolAsBc |
       auto |
       apply SPEDolAsBc]];
-  solvegeDol.
+  solvepref.
 Qed.
 
 (* Along Good AcBc *)
-Lemma AlongGoodDolAcBc: forall n, AlongGood geDol (dollarAcBc n).
+Lemma AlongGoodDolAcBc: forall n, AlongGood pref (dollarAcBc n).
 Proof.
   cofix AlongGoodDolAcBc.
   intro n; decomp; apply AlongNode.
