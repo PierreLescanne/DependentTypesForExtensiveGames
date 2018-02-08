@@ -1,4 +1,4 @@
-(* Time-stamp: "2017-02-07 13:51:37 pierre" *)
+(* Time-stamp: "2018-02-08 18:21:08 pierre" *)
 (****************************************************************)
 (*                        escalation.v                          *)
 (*                                                              *)
@@ -7,36 +7,36 @@
 (*              LIP (ENS-Lyon, CNRS, INRIA)                     *)
 (*                                                              *)
 (*                                                              *)
-(*  Developed in  V8.6                   January -- April 2016  *)
+(*  Developed in  V8.4pl4                January -- April 2016  *)
 (****************************************************************)
 Section Escalation.
 
-Require Import games yingYang dollar.
+Require Import games_Choice_Dependent yingYang dollar.
 
-Arguments Divergent  [Agent Choice Utility] s.
+Arguments Divergent  [Agent Utility Choice] s.
 
 (* preference on Utility *)
 Require Import Relations.
 
-Lemma AlongGoodAndDivergentInYingYang :
-  exists (s:StratProf yingYang.Agent yingYang.Choice yingYang.Utility),
-    AlongGood yingYang.Agent yingYang.Choice yingYang.Utility yingYang.pref s
-    /\ Divergent s.
+Lemma AlwaysGoodAndDivergentInYingYang :
+  exists (s:StratProf yingYang.AliceBob  YingYang yingYang.Choice),
+    AlwaysGood yingYang.AliceBob YingYang yingYang.Choice eq s /\
+    Divergent s.
 Proof.
   exists yingYangAcBc.  
   split.
-  apply AlongGoodYyAcBc.
+  apply AlwaysGoodYyAcBc.
   apply DivergenceYyAcBc.
 Qed.
 
-Lemma AlongGoodAndDivergentInDollar :
-  exists (s:StratProf dollar.Agent dollar.Choice dollar.Utility),
-    AlongGood dollar.Agent dollar.Choice dollar.Utility dollar.pref s
-    /\ Divergent s.
+Lemma AlwaysGoodAndDivergentInDollar :
+  exists (s:StratProf dollar.AliceBob nat dollar.Choice),
+    AlwaysGood dollar.AliceBob nat dollar.Choice ge s /\
+    Divergent s.
 Proof.
   exists (dollarAcBc 0).
   split.
-  apply AlongGoodDolAcBc.
+  apply AlwaysGoodDolAcBc.
   apply DivergenceDolAcBc.
 Qed.
 

@@ -1,4 +1,4 @@
-(* Time-stamp: "2017-02-07 13:33:48 pierre" *)
+(* Time-stamp: "2018-02-08 18:19:03 pierre" *)
 (****************************************************************)
 (*                        dollar.v                              *)
 (*                                                              *)
@@ -7,47 +7,44 @@
 (*              LIP (ENS-Lyon, CNRS, INRIA)                     *)
 (*                                                              *)
 (*                                                              *)
-(*  Developed in  V8.6            January 2016 -- Januar 2017   *)
+(*  Developed in  V8.4pl4               January -- May   2016   *)
 (****************************************************************)
 Section Dollar.
 
 Add LoadPath ".". 
 
-Require Import games.
+Require Import games_Choice_Dependent.
 Require Import Omega.
-Require Import Relations.
 
 (* Setting sets for agents and choices *)
-Inductive Agent : Set := | Alice | Bob.
+Inductive AliceBob : Set := | Alice | Bob.
 Inductive DorR : Set := | d | r.
-Definition Choice: Agent -> Set := fun a => DorR.
-Definition Utility: Agent -> Set := fun a => nat.
-Definition pref: forall a: Agent, relation (Utility a) :=
-  fun a :Agent => fun x:Utility a => fun y:Utility a => ge x y.
+Definition Choice: AliceBob -> Set := fun a => DorR.
 
-Arguments StratProf [Agent Choice Utility].
-Arguments Game [Agent Choice Utility].
-Arguments UAssignment [Agent Choice Utility] s H a.
-Arguments game [Agent Choice Utility] s.
-Arguments Convergent [Agent Choice Utility] s.
-Arguments AlwaysConvergent [Agent Choice Utility] s.
-Arguments convLeaf [Agent Choice Utility] f.
-Arguments convNode [Agent Choice Utility] a c next _.
-Arguments StratProf_identity [Agent Choice Utility] s.
-Arguments SPE [Agent Choice Utility] pref  s.
-Arguments Uassign [Agent Choice Utility] s u.
-Arguments good [Agent Choice Utility] pref s.
-Arguments gEqual [Agent Choice Utility] g1 g2.
-Arguments Divergent  [Agent Choice Utility] s.
-Arguments AlongGood  [Agent Choice Utility] pref s.
+Arguments StratProf [Agent Utility Choice].
+Arguments Game [Agent Utility Choice].
+Arguments UAssignment [Agent Utility Choice] s H a.
+Arguments game [Agent Utility Choice] s.
+Arguments StratProf_decomposition [Agent Utility Choice] s.
+Arguments Convergent [Agent Utility Choice] s.
+Arguments AlwaysConvergent [Agent Utility Choice] s.
+Arguments convLeaf [Agent Utility Choice] f.
+Arguments convNode [Agent Utility Choice] a c next _.
+Arguments StratProf_identity [Agent Utility Choice] s.
+Arguments SPE [Agent Utility Choice] preference  s.
+Arguments Uassign [Agent Utility Choice] s a u.
+Arguments good [Agent Utility Choice] preference s.
+Arguments gEqual [Agent Utility Choice] g1 g2.
+Arguments Divergent  [Agent Utility Choice] s.
+Arguments AlwaysGood  [Agent Utility Choice] preference s.
 
-Notation "<< f >>" := (sLeaf Agent Choice Utility f).
+Notation "<< f >>" := (sLeaf AliceBob nat Choice f).
 Notation "<< a , c , next >>" := 
-  (sNode Agent Choice Utility a c next).
+  (sNode AliceBob nat Choice a c next).
 Notation "[ x , y ]" := 
-  (fun a:Agent => match a as Agent return (Utility a) with Alice => x | Bob => y end).
-Notation "<| f |>" := (gLeaf  Agent nat Choice f).
-Notation "<| a , next |>" := (gNode Agent Choice Utility a next).
+  (fun a:AliceBob => match a with Alice => x | Bob => y end).
+Notation "<| f |>" := (gLeaf  AliceBob nat Choice f).
+Notation "<| a , next |>" := (gNode AliceBob nat Choice a next).
 
 Notation "s1 +++ s2" := 
   (fun c:DorR => match c with d => s1 | r => s2 end) 
@@ -59,7 +56,6 @@ Notation "↑ s " := (Divergent s) (at level 5).
 Notation "g == g'" := (gEqual g g') (at level 80).
 
 Ltac decomp := rewrite <- StratProf_decomposition;  simpl.
-Ltac solvepref :=  unfold pref;  omega.
 
 (* --------------------------------- *)
 (**    Dollar Auction                *)
@@ -79,7 +75,7 @@ CoFixpoint dollarAcBc n := <<Alice, r, <<[n+1,n]>> +++ dollarBcAc n>>
 
 (* A continues Bob stops *)
 
-Lemma UassignDolAcBs: forall n, Uassign (dollarAcBs n) [n+1,n+1].
+Lemma UassignDolAcBsA: forall n, Uassign (dollarAcBs n) Alice (n+1).
 Proof.
   intro n.
   rewrite <- StratProf_decomposition with (s:=dollarAcBs n); simpl.
@@ -89,7 +85,25 @@ Proof.
   apply UassignLeaf.  
 Qed.
 
-Lemma UassignDolBsAc: forall n, Uassign (dollarBsAc n) [n+1,n+1].
+Lemma UassignDolAcBsB: forall n, Uassign (dollarAcBs n) Bob (n+1).
+Proof.
+  intro n.
+  rewrite <- StratProf_decomposition with (s:=dollarAcBs n); simpl.
+  apply UassignNode.
+  rewrite <- StratProf_decomposition with (s:=dollarBsAc n); simpl.
+  apply UassignNode.
+  apply UassignLeaf.  
+Qed.
+
+Lemma UassignDolBsAcA: forall n, Uassign (dollarBsAc n) Alice (n+1).
+Proof.
+  intro n.
+  rewrite <- StratProf_decomposition with (s:=dollarBsAc n); simpl.
+  apply UassignNode.
+  apply UassignLeaf.  
+Qed.
+
+Lemma UassignDolBsAcB: forall n, Uassign (dollarBsAc n) Bob (n+1).
 Proof.
   intro n.
   rewrite <- StratProf_decomposition with (s:=dollarBsAc n); simpl.
@@ -98,7 +112,7 @@ Proof.
 Qed.
 
 (* A stops Bob continues *)
-Lemma UassignDolAsBc: forall n, Uassign (dollarAsBc n) [n+1,n].
+Lemma UassignDolAsBcA: forall n, Uassign (dollarAsBc n) Alice (n+1).
 Proof.
   intro n.
   rewrite <- StratProf_decomposition with (s:=dollarAsBc n); simpl.
@@ -106,12 +120,28 @@ Proof.
   apply UassignLeaf.  
 Qed.
 
-Lemma UassignDolBcAs: forall n, Uassign (dollarBcAs n) [n+1+1,n+1].
+Lemma UassignDolAsBcB: forall n, Uassign (dollarAsBc n) Bob n.
+Proof.
+  intro n.
+  rewrite <- StratProf_decomposition with (s:=dollarAsBc n); simpl.
+  apply UassignNode.
+  apply UassignLeaf.  
+Qed.
+
+Lemma UassignDolBcAsA: forall n, Uassign (dollarBcAs n) Alice (n+1+1).
 Proof.
   intro n.
   rewrite <- StratProf_decomposition with (s:=dollarBcAs n); simpl.
   apply UassignNode.
-  apply UassignDolAsBc.  
+  apply UassignDolAsBcA.  
+Qed.
+
+Lemma UassignDolBcAsB: forall n, Uassign (dollarBcAs n) Bob (n+1).
+Proof.
+  intro n.
+  rewrite <- StratProf_decomposition with (s:=dollarBcAs n); simpl.
+  apply UassignNode.
+  apply UassignDolAsBcB.
 Qed.
 
 (* Lemmas on Convergence of strategy profiles *)
@@ -236,120 +266,117 @@ Proof.
 Qed.
 
 (* SPE *)
-Lemma SPEDolAcBs: forall n, SPE pref (dollarAcBs n).
+Lemma SPEDolAcBs: forall n, SPE ge (dollarAcBs n).
 Proof.
   cofix SPEDolAcBs;
   intro n;
   decomp;
-  apply SPENode with (c':=r)(ua:=[n+1,n+1])(ua':=[n+1,n+1]);
-  [apply AlwaysNode; [apply ConvNode;apply ConvergentDolBsAc |
-                      induction c'; [apply AlwaysLeaf | apply AlwsConvDolBsAc]] |
-   apply UassignDolBsAc |
-   apply UassignDolBsAc |
-   solvepref |
-   decomp; apply SPENode with (c':=r)(ua:=[n+1,n+1])(ua':=[n+1+1,n+1+1]);
-   [apply AlwaysNode; [apply ConvNode;  apply ConvLeaf |
-                       induction c'; [apply AlwaysLeaf| apply AlwsConvDolAcBs]] |
-    apply UassignDolAcBs |
+  apply SPENode with (c':=r)(u:=n+1)(u':=n+1);
+  [apply AlwaysNode; [apply ConvNode;apply ConvergentDolBsAc | induction c'; [apply AlwaysLeaf | apply AlwsConvDolBsAc]] |
+   apply UassignDolBsAcA |
+   apply UassignDolBsAcA | 
+   auto | 
+   decomp;
+   apply SPENode with (c':=r)(u:=n+1)(u':=n+1+1);
+   [apply AlwaysNode; [apply ConvNode;  apply ConvLeaf | induction c'; [apply AlwaysLeaf| apply AlwsConvDolAcBs]] |
+    apply UassignDolAcBsB |
     apply UassignLeaf |
-    solvepref |
-   apply SPEDolAcBs]].
+    omega |
+    apply SPEDolAcBs]].
 Qed.
 
-Lemma SPEDolBsAc: forall n, SPE pref (dollarBsAc n).
+Lemma SPEDolBsAc: forall n, SPE ge (dollarBsAc n).
 Proof.
   cofix SPEDolBsAc;
   intro n;
   decomp;
-  apply SPENode with (c':=r)(ua:=[n+1,n+1])(ua':=[n+1+1,n+1+1]);
+  apply SPENode with (c':=r)(u:=n+1)(u':=n+1+1);
   [apply AlwaysNode; [apply ConvNode; apply ConvLeaf | induction c';[apply AlwaysLeaf | apply AlwsConvDolAcBs]] |
-   apply UassignDolAcBs |
+   apply UassignDolAcBsB |
    apply UassignLeaf | 
-   solvepref |
+   omega |
    apply SPEDolAcBs].
 Qed.
  
-Lemma SPEDolAsBc: forall n, SPE pref (dollarAsBc n).
+Lemma SPEDolAsBc: forall n, SPE ge (dollarAsBc n).
 Proof.
   cofix SPEDolAsBc;
   intro n;
   decomp;
-  apply SPENode with (c':=r)(ua:=[n+1,n])(ua':=[n+1+1,n+1]);
+  apply SPENode with (c':=r)(u:=n+1)(u':=n+1+1);
   [apply AlwaysNode; [apply ConvNode; apply ConvLeaf |
                       induction c';[apply AlwaysLeaf | apply AlwsConvDolBcAs]] |
-   apply UassignDolBcAs |
+   apply UassignDolBcAsA |
    apply UassignLeaf | 
-   solvepref |
+   omega |
    decomp; 
-   apply SPENode with (c':=r)(ua:=[n+1+1,n+1])(ua':=[n+1+1,n+1]); 
+   apply SPENode with (c':=r)(u:=n+1)(u':=n+1); 
    [apply AlwaysNode; [apply ConvNode; apply ConvergentDolAsBc |
                        induction c'; [apply AlwaysLeaf | apply AlwsConvDolAsBc]] |
-    apply UassignDolAsBc |
-    apply UassignDolAsBc |
+    apply UassignDolAsBcB |
+    apply UassignDolAsBcB |
     auto |
-    apply SPEDolAsBc]] ;
-  solvepref.
+    apply SPEDolAsBc]].
 Qed.
 
-Lemma SPEDolBcAs: forall n, SPE pref (dollarBcAs n).
+Lemma SPEDolBcAs: forall n, SPE ge (dollarBcAs n).
 Proof.
-  intro n; decomp; apply SPENode with (c':=r)(ua:=[n+1+1,n+1])(ua':=[n+1+1,n+1]);
+  intro n; decomp; apply SPENode with (c':=r)(u:=n+1)(u':=n+1);
   [apply AlwaysNode; [apply ConvNode; apply ConvergentDolAsBc |
                       induction c'; [apply AlwaysLeaf | apply AlwsConvDolAsBc]] |
-   apply UassignDolAsBc |
-   apply UassignDolAsBc |
-   solvepref | 
+   apply UassignDolAsBcB |
+   apply UassignDolAsBcB |
+   auto | 
    apply SPEDolAsBc].
 Qed.
 
 (* Good *)
-Lemma GoodDolAcBc: forall n, good pref (dollarAcBc n).
+Lemma GoodDolAcBc: forall n, good ge (dollarAcBc n).
 Proof.
   intro n;
   decomp;
   apply goodNode with (next':= <<[n+1,n]>> +++ dollarBcAs n);
-   [rewrite gameNode; rewrite gameNode; apply gEqualNode;
+  split;
+  [rewrite gameNode; rewrite gameNode; apply gEqualNode;
    induction c; [ apply refGEqual | apply sameGameBcAs_BcAc]|
-   apply SPENode with (c':=r)(ua:=[n+1+1,n+1])(ua':=[n+1+1,n+1]);
+   apply SPENode with (c':=r)(u:=n+1+1)(u':=n+1+1);
      [apply AlwaysNode; [apply ConvNode; apply ConvergentDolBcAs |
                          induction c'; [apply AlwaysLeaf |  apply AlwsConvDolBcAs]] |
-      apply UassignDolBcAs | 
-      apply UassignDolBcAs |
+      apply UassignDolBcAsA | 
+      apply UassignDolBcAsA |
       auto |
-      apply SPEDolBcAs]];
-   solvepref.
+      apply SPEDolBcAs]].
 Qed.
 
-Lemma GoodDolBcAc: forall n, good pref (dollarBcAc n).
+Lemma GoodDolBcAc: forall n, good ge (dollarBcAc n).
 Proof.
   intro n; decomp; decomp;
   apply goodNode with (next':= <<[n+1,n+1]>> +++ dollarAsBc (n + 1));
+  split;
   [rewrite gameNode; rewrite gameNode; apply gEqualNode;
    induction c; [rewrite gameLeaf; apply gEqualLeaf| apply sameGameAcBc_AsBc] |
-   apply SPENode with (c':=r)(ua:=[n+1+1,n+1])(ua':=[n+1+1,n+1]);
+   apply SPENode with (c':=r)(u:=n+1)(u':=n+1);
      [apply AlwaysNode; [apply ConvNode; apply ConvergentDolAsBc |
                          induction c'; [apply AlwaysLeaf | apply AlwsConvDolAsBc]] |
-      apply UassignDolAsBc |
-      apply UassignDolAsBc |
+      apply UassignDolAsBcB |
+      apply UassignDolAsBcB |
       auto |
-      apply SPEDolAsBc]];
-  solvepref.
+      apply SPEDolAsBc]].
 Qed.
 
-(* Along Good AcBc *)
-Lemma AlongGoodDolAcBc: forall n, AlongGood pref (dollarAcBc n).
+(* Always Good AcBc *)
+Lemma AlwaysGoodDolAcBc: forall n, AlwaysGood ge (dollarAcBc n).
 Proof.
-  cofix AlongGoodDolAcBc.
-  intro n; decomp; apply AlongNode.
-  replace (<< Alice, r, << [n+1, n] >> +++ dollarBcAc n >>) with (dollarAcBc n).
-    apply GoodDolAcBc.
-     rewrite <- StratProf_decomposition with (s:=dollarAcBc n); simpl; reflexivity.
-  decomp.
-  apply AlongNode.
-  replace  (<< Bob, r, << [n+1,n+1] >> +++ dollarAcBc (n+1) >>)  with (dollarBcAc n).
-  apply GoodDolBcAc.
- rewrite <- StratProf_decomposition with (s:=dollarBcAc n); simpl; reflexivity.
-apply AlongGoodDolAcBc.
+  cofix AlwaysGoodDolAcBc; 
+  intro n; decomp; apply AlwaysNode;
+  [replace (<< Alice, r, << [n+1, n] >> +++ dollarBcAc n >>) with (dollarAcBc n);
+    [apply GoodDolAcBc | rewrite <- StratProf_decomposition with (s:=dollarAcBc n); simpl; reflexivity]|
+    induction c';
+    [apply AlwaysLeaf | 
+     decomp; apply AlwaysNode;
+     [replace (<< Bob, r, << [n+1, n+1] >> +++ dollarAcBc (n + 1)>>) with (dollarBcAc n);
+       [apply GoodDolBcAc | rewrite <- StratProf_decomposition with (s:=dollarBcAc n);  simpl; reflexivity]|
+      induction c'; [ apply AlwaysLeaf | apply AlwaysGoodDolAcBc]]]].
 Qed.
 
 (* Divergent *)

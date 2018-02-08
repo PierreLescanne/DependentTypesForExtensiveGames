@@ -1,4 +1,4 @@
-(* Time-stamp: "2017-01-26 17:54:39 pierre" *)
+(* Time-stamp: "2018-02-08 18:25:58 pierre" *)
 (****************************************************************)
 (*                       yingYang.v                             *)
 (*                                                              *)
@@ -7,46 +7,44 @@
 (*              LIP (ENS-Lyon, CNRS, INRIA)                     *)
 (*                                                              *)
 (*                                                              *)
-(*  Developed in  V8.6          January 2016  -- January 2017   *)
+(*  Developed in  V8.4pl4               January -- May   2016   *)
 (****************************************************************)
+
 Section YingYang.
 
 Add LoadPath ".". 
 
-Require Import games.
-Require Import Relations.
+Require Import games_Choice_Dependent.
 
 (* Setting sets for agents and choices *)
 Inductive AliceBob : Set := | Alice | Bob.
 Inductive DorR : Set := | down | right.
 Inductive YingYang: Set := | ying | yang.
-Definition ChoiceYY: AliceBob -> Set := fun a => DorR.
-Definition UtilityYY: AliceBob -> Set := fun a => YingYang.
-Definition eqYY: forall a: AliceBob, relation (UtilityYY a) :=
-  fun a :AliceBob => fun x:UtilityYY a => fun y:UtilityYY a => x=y.
+Definition Choice: AliceBob -> Set := fun a => DorR.
 
-Arguments StratProf [Agent Choice Utility].
-Arguments Game [Agent Choice Utility].
-Arguments UAssignment [Agent Choice Utility] s H a.
-Arguments game [Agent Choice Utility] s.
-Arguments Convergent [Agent Choice Utility] s.
-Arguments AlwaysConvergent [Agent Choice Utility] s.
-Arguments convLeaf [Agent Choice Utility] f.
-Arguments convNode [Agent Choice Utility] a c next _.
-Arguments SPE [Agent Choice Utility] pref  s.
-Arguments Uassign [Agent Choice Utility] s u.
-Arguments good [Agent Choice Utility] pref s.
-Arguments gEqual [Agent Choice Utility] g1 g2.
-Arguments Divergent  [Agent Choice Utility] s.
-Arguments AlongGood  [Agent Choice Utility] pref s.
+Arguments StratProf [Agent Utility Choice].
+Arguments Game [Agent Utility Choice].
+Arguments UAssignment [Agent Utility Choice] s H a.
+Arguments game [Agent Utility Choice] s.
+Arguments StratProf_decomposition [Agent Utility Choice] s.
+Arguments Convergent [Agent Utility Choice] s.
+Arguments AlwaysConvergent [Agent Utility Choice] s.
+Arguments convLeaf [Agent Utility Choice] f.
+Arguments convNode [Agent Utility Choice] a c next _.
+Arguments SPE [Agent Utility Choice] preference  s.
+Arguments Uassign [Agent Utility Choice] s a u.
+Arguments good [Agent Utility Choice] preference s.
+Arguments gEqual [Agent Utility Choice] g1 g2.
+Arguments Divergent  [Agent Utility Choice] s.
+Arguments AlwaysGood  [Agent Utility Choice] preference s.
 
-Notation "<< f >>" := (sLeaf AliceBob ChoiceYY UtilityYY f).
+Notation "<< f >>" := (sLeaf AliceBob YingYang Choice  f).
 Notation "<< a , c , next >>" := 
-  (sNode AliceBob ChoiceYY UtilityYY a c next).
+  (sNode AliceBob YingYang Choice a c next).
 Notation "[ x , y ]" := 
-  (fun a:AliceBob => match a as AliceBob return (UtilityYY a) with Alice => x | Bob => y end).
-Notation "<| f |>" := (gLeaf  AliceBob ChoiceYY UtilityYY f).
-Notation "<| a , next |>" := (gNode AliceBob ChoiceYY UtilityYY a next).
+  (fun a:AliceBob => match a with Alice => x | Bob => y end).
+Notation "<| f |>" := (gLeaf  AliceBob YingYang Choice f).
+Notation "<| a , next |>" := (gNode AliceBob YingYang Choice a next).
 
 Notation "s1 +++ s2" := 
   (fun c:DorR => match c with down => s1 | right => s2 end) 
@@ -77,33 +75,54 @@ CoFixpoint yingYangAcBc := <<Alice, right, <<[yang,ying]>> +++ yingYangBcAc>>
 
 (* A continue Bob stops *)
 
-Lemma UassignYyBsAc: Uassign yingYangBsAc [ying,yang].
+Lemma UassignYyBsAcya: Uassign yingYangBsAc Alice ying.
 Proof.
   rewrite <- StratProf_decomposition with (s:=yingYangBsAc); simpl.
   apply UassignNode.
   apply UassignLeaf.
 Qed.
 
-Lemma UassignYyAcBs: Uassign yingYangAcBs [ying,yang].
+Lemma UassignYyBsAcyi: Uassign yingYangBsAc Bob yang.
+Proof.
+  rewrite <- StratProf_decomposition with (s:=yingYangBsAc); simpl.
+  apply UassignNode.
+  apply UassignLeaf.
+Qed.
+
+Lemma UassignYyAcBsyi: Uassign yingYangAcBs Bob yang.
 Proof.
   rewrite <- StratProf_decomposition with (s:=yingYangAcBs); simpl.
   apply UassignNode.
-  apply UassignYyBsAc.
+  apply UassignYyBsAcyi.
 Qed.
 
 (* A stops Bob continues *)
-Lemma UassignYyAsBc: Uassign yingYangAsBc [yang,ying].
+Lemma UassignYyAsBcyi: Uassign yingYangAsBc Alice yang.
 Proof.
   rewrite <- StratProf_decomposition with (s:=yingYangAsBc); simpl.
   apply UassignNode.
   apply UassignLeaf.
 Qed.
 
-Lemma UassignYyBcAs: Uassign yingYangBcAs [yang,ying].
+Lemma UassignYyAsBcya: Uassign yingYangAsBc Bob ying.
+Proof.
+  rewrite <- StratProf_decomposition with (s:=yingYangAsBc); simpl.
+  apply UassignNode.
+  apply UassignLeaf.
+Qed.
+
+Lemma UassignYyBcAsyi: Uassign yingYangBcAs Alice yang.
 Proof.
   rewrite <- StratProf_decomposition with (s:=yingYangBcAs); simpl.
   apply UassignNode.
-  apply UassignYyAsBc.
+  apply UassignYyAsBcyi.
+Qed.
+
+Lemma UassignYyBcAsya:  Uassign yingYangBcAs Bob ying.
+Proof.
+  rewrite <- StratProf_decomposition with (s:=yingYangBcAs); simpl.
+  apply UassignNode.
+  apply UassignYyAsBcya.
 Qed.
 
 (* Lemmas on Convergence of strategy profiles *)
@@ -172,8 +191,8 @@ Lemma sameGameBcAc_BsAc: game yingYangBcAc == game yingYangBsAc.
 Proof.
   cofix sameGameBcAc_BsAc.
   rewrite <- StratProf_decomposition with (s:=yingYangBcAc);
-    rewrite <- StratProf_decomposition with (s:=yingYangBsAc);
-  cbn;
+  rewrite <- StratProf_decomposition with (s:=yingYangBsAc);
+  simpl;
   rewrite gameNode; rewrite gameNode; apply gEqualNode;
   induction c; 
   [apply refGEqual |
@@ -219,144 +238,152 @@ Proof.
 Qed.
 
 (* SPE *)
-Lemma SPEYyAcBs: SPE eqYY yingYangAcBs.
+Lemma SPEYyAcBs: SPE eq yingYangAcBs.
 Proof.
   cofix SPEYyAcBs;
   decomp;
-  apply SPENode with (c':=right)(u:=[ying,yang])(u':=[ying,yang]);
-  [apply AlwaysNode;  [apply ConvNode; apply ConvYyBsAc | 
+  apply SPENode with (c':=right)(u:=ying)(u':=ying);
+  [apply AlwaysNode; [apply ConvNode; apply ConvYyBsAc |
                       induction c';  [apply AlwaysLeaf | apply AlwsConvYyBsAc]] |
-   apply UassignYyBsAc |
-   apply UassignYyBsAc |
+   apply UassignYyBsAcya |
+   apply UassignYyBsAcya | 
    reflexivity |
-   decomp; apply SPENode with (c':=right)(u:=[ying,yang])(u':=[ying,yang]);
+   decomp ; apply SPENode with (c':=right)(u:=yang)(u':=yang); 
    [apply AlwaysNode; [apply ConvNode; apply ConvLeaf |
                        induction c'; [apply AlwaysLeaf | apply AlwsConvYyAcBs]] |
-    apply UassignYyAcBs |
+    apply UassignYyAcBsyi |
     apply UassignLeaf |
     reflexivity |
     apply SPEYyAcBs]].
 Qed.
 
-Lemma SPEYyBsAc: SPE eqYY yingYangBsAc.
+Lemma SPEYyBsAc: SPE eq yingYangBsAc.
 Proof.
   cofix SPEYyBsAc.
-  decomp;
-  apply SPENode with (c':=right)(u:=[ying,yang])(u':=[ying,yang]);
-  [apply AlwaysNode; [apply ConvNode; apply ConvLeaf | 
-                      induction c'; [apply AlwaysLeaf | apply AlwsConvYyAcBs]] |
-  apply UassignYyAcBs |
-  apply UassignLeaf |
-  reflexivity |
-  apply SPEYyAcBs].
+  decomp.
+  apply SPENode with (c':=right)(u:=yang)(u':=yang).
+  apply AlwaysNode.  
+  apply ConvNode.
+  apply ConvLeaf.
+  induction c'.
+  apply AlwaysLeaf.
+  apply AlwsConvYyAcBs.
+  apply UassignYyAcBsyi.
+  apply UassignLeaf.
+  reflexivity.
+  apply SPEYyAcBs.
 Qed.
 
-Lemma SPEYyAsBc: SPE eqYY yingYangAsBc.
+Lemma SPEYyAsBc: SPE eq yingYangAsBc.
 Proof.
   cofix SPEYyAsBc.
   decomp.
-  apply SPENode with (c':=right)(u:=[yang,ying])(u':=[yang,ying]).
+  apply SPENode with (c':=right)(u:=yang)(u':=yang).
   apply AlwaysNode.  
   apply ConvNode.
   apply ConvLeaf.
   induction c'.
   apply AlwaysLeaf.
   apply AlwsConvYyBcAs.
-  apply UassignYyBcAs.
+  apply UassignYyBcAsyi.
   apply UassignLeaf.
   reflexivity.
   decomp.
-  apply SPENode with (c':=right)(u:=[yang,ying])(u':=[yang,ying]).
+  apply SPENode with (c':=right)(u:=ying)(u':=ying).
   apply AlwaysNode.  
   apply ConvNode.  
   apply ConvYyAsBc.
   induction c'.
   apply AlwaysLeaf.
   apply AlwsConvYyAsBc.
-  apply UassignYyAsBc.
-  apply UassignYyAsBc.
+  apply UassignYyAsBcya.
+  apply UassignYyAsBcya.
   reflexivity.
   apply SPEYyAsBc.
 Qed.
 
-Lemma SPEYyBcAs: SPE eqYY yingYangBcAs.
+Lemma SPEYyBcAs: SPE eq yingYangBcAs.
 Proof.
   decomp.
-  apply SPENode with (c':=right)(u:=[yang,ying])(u':=[yang,ying]).
+  apply SPENode with (c':=right)(u:=ying)(u':=ying).
   apply AlwaysNode.  
   apply ConvNode.
   apply ConvYyAsBc.
   induction c'.
   apply AlwaysLeaf.
   apply AlwsConvYyAsBc.
-  apply UassignYyAsBc.
-  apply UassignYyAsBc.
+  apply UassignYyAsBcya.
+  apply UassignYyAsBcya.
   reflexivity.
   apply SPEYyAsBc.
 Qed.
 
 (* Good *)
-Lemma GoodYyAcBc: good eqYY yingYangAcBc.
+Lemma GoodYyAcBc: good eq yingYangAcBc.
 Proof.
   decomp.
   apply goodNode with (next':= <<[yang,ying]>> +++ yingYangBsAc).
+  split.
   rewrite gameNode; rewrite gameNode.
   apply gEqualNode.
   induction c.
   rewrite gameLeaf.
   apply gEqualLeaf.
   apply sameGameBcAc_BsAc.
-  apply SPENode with (c':=right)(u:=[ying,yang])(u':=[ying,yang]).
+  apply SPENode with (c':=right)(u:=ying)(u':=ying).
   apply AlwaysNode.
   apply ConvNode.
   apply ConvYyBsAc.
   induction c'.
   apply AlwaysLeaf.
   apply AlwsConvYyBsAc.
-  apply UassignYyBsAc.
-  apply UassignYyBsAc.
+  apply UassignYyBsAcya.
+  apply UassignYyBsAcya.
   reflexivity.
   apply SPEYyBsAc.
 Qed.
 
-Lemma GoodYyBcAc: good eqYY yingYangBcAc.
+Lemma GoodYyBcAc: good eq yingYangBcAc.
 Proof.
   decomp.
   apply goodNode with (next':= <<[ying,yang]>> +++ yingYangAsBc).
+  split.
   rewrite gameNode; rewrite gameNode.
   apply gEqualNode.
   induction c.
   rewrite gameLeaf.
   apply gEqualLeaf.
   apply sameGameAcBc_AsBc.
-  apply SPENode with (c':=right)(u:=[yang,ying])(u':=[yang,ying]).
+  apply SPENode with (c':=right)(u:=ying)(u':=ying).
   apply AlwaysNode.
   apply ConvNode.
   apply ConvYyAsBc.
   induction c'.
   apply AlwaysLeaf.
   apply AlwsConvYyAsBc.
-  apply UassignYyAsBc.
-  apply UassignYyAsBc.
+  apply UassignYyAsBcya.
+  apply UassignYyAsBcya.
   reflexivity.
   apply SPEYyAsBc.
 Qed.
 
 (* Always Good AcBc *)
-Lemma AlongGoodYyAcBc: AlongGood eqYY yingYangAcBc.
+Lemma AlwaysGoodYyAcBc: AlwaysGood eq yingYangAcBc.
 Proof.
   cofix AlwaysGoodYyAcBc.
   decomp.
-  apply AlongNode.
+  apply AlwaysNode.
   replace (<< Alice, right, << [yang,ying] >> +++ yingYangBcAc >>) with yingYangAcBc.
   apply GoodYyAcBc.
   rewrite <- StratProf_decomposition with (s:=yingYangAcBc); simpl; reflexivity.
+  induction c'.
+  apply AlwaysLeaf.
   decomp.
-  apply AlongNode.
+  apply AlwaysNode.
   replace (<< Bob, right, << [ying,yang] >> +++ yingYangAcBc >>) with yingYangBcAc.
   apply GoodYyBcAc.
   rewrite <- StratProf_decomposition with (s:=yingYangBcAc); simpl; reflexivity.
-  apply AlwaysGoodYyAcBc.
+  induction c'; [apply AlwaysLeaf | apply AlwaysGoodYyAcBc].
 Qed.
 
 (* Divergent *)
