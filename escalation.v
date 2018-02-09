@@ -1,4 +1,4 @@
-(* Time-stamp: "2018-02-08 18:21:08 pierre" *)
+(* Time-stamp: "2018-02-09 17:01:29 pierre" *)
 (****************************************************************)
 (*                        escalation.v                          *)
 (*                                                              *)
@@ -11,19 +11,19 @@
 (****************************************************************)
 Section Escalation.
 
-Require Import games_Choice_Dependent yingYang dollar.
+Require Import games_Choice_Dependent yinYang dollar.
 
 Arguments Divergent  [Agent Utility Choice] s.
 
 (* preference on Utility *)
 Require Import Relations.
 
-Lemma AlwaysGoodAndDivergentInYingYang :
-  exists (s:StratProf yingYang.AliceBob  YingYang yingYang.Choice),
-    AlwaysGood yingYang.AliceBob YingYang yingYang.Choice eq s /\
+Lemma AlwaysGoodAndDivergentInYinYang :
+  exists (s:StratProf yinYang.AliceBob  YinYang yinYang.Choice),
+    AlwaysGood yinYang.AliceBob YinYang yinYang.Choice eq s /\
     Divergent s.
 Proof.
-  exists yingYangAcBc.  
+  exists yinYangAcBc.  
   split.
   apply AlwaysGoodYyAcBc.
   apply DivergenceYyAcBc.
