@@ -11,8 +11,6 @@
 (****************************************************************)
 Section Dollar.
 
-Add LoadPath ".". 
-
 Require Import games_Choice_Dependent.
 Require Import Omega.
 
@@ -21,8 +19,8 @@ Inductive AliceBob : Set := | Alice | Bob.
 Inductive DorR : Set := | d | r.
 Definition Choice: AliceBob -> Set := fun a => DorR.
 
-Arguments StratProf [Agent Utility Choice].
-Arguments Game [Agent Utility Choice].
+Arguments StratProf {Agent Utility Choice}.
+Arguments Game {Agent Utility Choice}.
 Arguments UAssignment [Agent Utility Choice] s H a.
 Arguments game [Agent Utility Choice] s.
 Arguments StratProf_decomposition [Agent Utility Choice] s.

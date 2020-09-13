@@ -45,7 +45,7 @@ Qed.
   (** - Reflexivity of the equality *)
 Lemma refMGEqual: forall g, g == g.
 Proof.
- cofix;
+ cofix refMGEqual;
   destruct g;
   [apply eq_gLeaf
   | apply eq_gNode; intro;  apply refMGEqual].
@@ -61,7 +61,7 @@ CoInductive MSStratProf :=
   Notation "<< c , next >>" := (mssNode c next).
 
 Definition mgame: MSStratProf -> MGame.
-  cofix.
+  cofix game.
   intro s; case s;
   [intro f; exact (<!f!>)
   | intros c next; apply mgNode;

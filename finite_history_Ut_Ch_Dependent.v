@@ -11,9 +11,7 @@
 (****************************************************************)
 Section FiniteHistory.
 
-Add LoadPath ".".
-
-Require Import games. 
+Require Import games_Ut_Ch_Dependent. 
 
 Inductive AliceBob : Set := Alice | Bob.
 Definition Choice: (AliceBob -> Set) :=

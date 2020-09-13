@@ -12,8 +12,6 @@
 
 Section YinYang.
 
-Add LoadPath ".". 
-
 Require Import games_Choice_Dependent.
 
 (* Setting sets for agents and choices *)
@@ -22,8 +20,8 @@ Inductive DorR : Set := | down | right.
 Inductive YinYang: Set := | ying | yang.
 Definition Choice: AliceBob -> Set := fun a => DorR.
 
-Arguments StratProf [Agent Utility Choice].
-Arguments Game [Agent Utility Choice].
+Arguments StratProf {Agent Utility Choice}.
+Arguments Game {Agent Utility Choice}.
 Arguments UAssignment [Agent Utility Choice] s H a.
 Arguments game [Agent Utility Choice] s.
 Arguments StratProf_decomposition [Agent Utility Choice] s.
