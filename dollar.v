@@ -9,10 +9,10 @@
 (*                                                              *)
 (*  Developed in  V8.4pl4               January -- May   2016   *)
 (****************************************************************)
-Section Dollar.
-
 Require Import games_Choice_Dependent.
 Require Import Omega.
+
+Section Dollar.
 
 (* Setting sets for agents and choices *)
 Inductive AliceBob : Set := | Alice | Bob.

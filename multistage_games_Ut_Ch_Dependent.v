@@ -9,8 +9,9 @@
 (*                                                              *)
 (*  Developed in  V8.6              January 2016 -- March 2017  *)
 (****************************************************************)
-Section MultiStageGames.
 Require Import List games_Ut_Ch_Dependent.
+
+Section MultiStageGames.
 
 Variables (Agent: Set) (Choice Utility: Agent -> Set).
 

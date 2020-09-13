@@ -9,9 +9,9 @@
 (*                                                              *)
 (*  Developed in  V8.6              January 2016 --Janvier 2017 *)
 (****************************************************************)
-Section FiniteHistory.
+Require Import games_Ut_Ch_Dependent.
 
-Require Import games_Ut_Ch_Dependent. 
+Section FiniteHistory.
 
 Inductive AliceBob : Set := Alice | Bob.
 Definition Choice: (AliceBob -> Set) :=

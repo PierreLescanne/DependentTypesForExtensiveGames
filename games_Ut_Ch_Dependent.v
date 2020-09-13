@@ -9,8 +9,10 @@
 (*                                                              *)
 (*  Developed in  V8.6                            January 2016  *)
 (****************************************************************)
-Section Games.
 Require Import List.
+Require Import Relations.
+
+Section Games.
 
 (* Agents, Choices and Utilities *)
 Variable Agent : Set.
@@ -20,7 +22,6 @@ Variable Choice Utility: Agent -> Set.
 Variable finite: Set -> Prop.
 
 (* preference on Utility *)
-Require Import Relations.
 Variable pref : forall a: Agent, relation (Utility a).
 
 Hypothesis pref_is_preorder: forall a: Agent, preorder (Utility a) (pref a).
@@ -323,7 +324,6 @@ Variable Utility: Agent -> Set.
 Definition StPr := StratProf Agent Choice Utility. 
 
 (* preference on Utility *)
-Require Import Relations.
 Variable pref: forall a: Agent, relation (Utility a).
 
 Arguments game [Agent Choice Utility] s.

@@ -10,9 +10,9 @@
 (*  Developed in  V8.4pl4               January -- May   2016   *)
 (****************************************************************)
 
-Section YinYang.
-
 Require Import games_Choice_Dependent.
+
+Section YinYang.
 
 (* Setting sets for agents and choices *)
 Inductive AliceBob : Set := | Alice | Bob.

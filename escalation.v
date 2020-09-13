@@ -9,14 +9,12 @@
 (*                                                              *)
 (*  Developed in  V8.4pl4                January -- April 2016  *)
 (****************************************************************)
+Require Import games_Choice_Dependent yinYang dollar.
+Require Import Relations.
+
 Section Escalation.
 
-Require Import games_Choice_Dependent yinYang dollar.
-
 Arguments Divergent  [Agent Utility Choice] s.
-
-(* preference on Utility *)
-Require Import Relations.
 
 Lemma AlwaysGoodAndDivergentInYinYang :
   exists (s:StratProf yinYang.AliceBob  YinYang yinYang.Choice),
