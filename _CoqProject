@@ -1,0 +1,12 @@
+-R . DependentTypesForExtensiveGames
+
+-arg -w -arg -omega-is-deprecated
+
+dollar.v
+escalation.v
+finite_history_Choice_Dependent.v
+finite_history_Ut_Ch_Dependent.v
+games_Choice_Dependent.v
+games_Ut_Ch_Dependent.v
+multistage_games_Ut_Ch_Dependent.v
+yinYang.v

@@ -9,14 +9,15 @@
 (*                                                              *)
 (*  Developed in  V8.4pl4                January -- April 2016  *)
 (****************************************************************)
-Section Games.
 Require Import List.
+Require Import Relations.
+
+Section Games.
 
 (* Agents Utilities and Choices *)
 Variables (Agent Utility: Set) (Choice: Agent -> Set).
 
 (* preference on Utility *)
-Require Import Relations.
 Variable preference: relation Utility.
 
 Hypothesis preference_is_preorder: preorder Utility preference.
@@ -286,7 +287,6 @@ Variables (Agent Utility: Set) (Choice: Agent -> Set).
 Definition StPr := StratProf Agent Utility Choice. 
 
 (* preference on Utility *)
-Require Import Relations.
 Variable preference: relation Utility.
 
 Arguments game [Agent Utility Choice] s.
